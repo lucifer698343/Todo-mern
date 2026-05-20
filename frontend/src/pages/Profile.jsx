@@ -106,7 +106,7 @@ function Profile() {
                                 user.details.Image ? (
 
                                     <img
-                                        src={`http://localhost:5000${user.details.Image}`}
+                                        src={`https://todo-mern-zcmm.onrender.com${user.details.Image}`}
                                         alt="profile"
                                         style={{
                                             width: '120px',
