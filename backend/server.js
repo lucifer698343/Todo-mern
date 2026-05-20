@@ -1,16 +1,28 @@
 require('dotenv').config();
-const express=require('express')
-const connectDB=require('./config/db')
-const authRoutes=require('./routes/authRoutes')
+
+const express = require('express');
+const connectDB = require('./config/db');
+const authRoutes = require('./routes/authRoutes');
 const todoRoutes = require('./routes/todoRoutes');
 const adminRoutes = require('./routes/adminRoutes');
-const errorMiddleware=require('./middleware/errorMiddleware')
+const errorMiddleware = require('./middleware/errorMiddleware');
+
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 
-const app=express();
+const app = express();
 
-//middleware
+
+// CREATE UPLOADS FOLDER AUTOMATICALLY
+const uploadPath = path.join(__dirname, 'uploads');
+
+if (!fs.existsSync(uploadPath)) {
+    fs.mkdirSync(uploadPath, { recursive: true });
+}
+
+
+// MIDDLEWARE
 app.use(express.json());
 
 app.use(cors({
@@ -18,25 +30,32 @@ app.use(cors({
     credentials: true
 }));
 
-//connect db
+
+// CONNECT DATABASE
 connectDB();
 
+
+// ROOT ROUTE
 app.get('/', (req, res) => {
     res.send('Backend is running');
 });
 
-//routes
-app.use('/auth',authRoutes);
-app.use('/todo',todoRoutes);
+
+// STATIC FOLDER
+app.use('/uploads', express.static(uploadPath));
+
+
+// ROUTES
+app.use('/auth', authRoutes);
+app.use('/todo', todoRoutes);
 app.use('/admin', adminRoutes);
 
-//uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-//error middleware
+// ERROR MIDDLEWARE
 app.use(errorMiddleware);
 
-//starting the server
-app.listen(process.env.PORT,()=>{
-    console.log(`server running on port ${process.env.PORT}`)
-})
+
+// START SERVER
+app.listen(process.env.PORT, () => {
+    console.log(`server running on port ${process.env.PORT}`);
+});
