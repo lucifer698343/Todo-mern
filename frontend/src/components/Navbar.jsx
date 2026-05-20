@@ -1,9 +1,11 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 
 function Navbar() {
 
     const navigate = useNavigate();
+
+    const location = useLocation();
 
     const token = localStorage.getItem('token');
 
@@ -14,10 +16,15 @@ function Navbar() {
 
     // DECODE TOKEN
     if (token) {
+
         try {
+
             const decoded = jwtDecode(token);
+
             role = decoded.role;
+
         } catch (err) {
+
             localStorage.removeItem('token');
         }
     }
@@ -26,9 +33,17 @@ function Navbar() {
 
 
     const logout = () => {
+
         localStorage.removeItem('token');
+
         navigate('/login');
     };
+
+
+
+
+    // CHECK IF USER IS ON HOMEPAGE
+    const isHomePage = location.pathname === '/';
 
 
 
@@ -46,7 +61,10 @@ function Navbar() {
         }}>
 
             {/* LEFT SIDE - BRAND */}
-            <div style={{ fontWeight: 'bold', fontSize: '18px' }}>
+            <div style={{
+                fontWeight: 'bold',
+                fontSize: '18px'
+            }}>
                 TodoApp
             </div>
 
@@ -54,16 +72,30 @@ function Navbar() {
 
 
             {/* CENTER LINKS */}
-            <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+            <div style={{
+                display: 'flex',
+                gap: '15px',
+                alignItems: 'center'
+            }}>
 
+                {/* USER NAVBAR */}
                 {
-                    token && role === 'user' && (
+                    !isHomePage &&
+                    token &&
+                    role === 'user' && (
+
                         <>
-                            <Link style={linkStyle} to="/dashboard">
+                            <Link
+                                style={linkStyle}
+                                to="/dashboard"
+                            >
                                 Dashboard
                             </Link>
 
-                            <Link style={linkStyle} to="/profile">
+                            <Link
+                                style={linkStyle}
+                                to="/profile"
+                            >
                                 Profile
                             </Link>
                         </>
@@ -73,9 +105,16 @@ function Navbar() {
 
 
 
+                {/* ADMIN NAVBAR */}
                 {
-                    token && role === 'admin' && (
-                        <Link style={linkStyle} to="/admin">
+                    !isHomePage &&
+                    token &&
+                    role === 'admin' && (
+
+                        <Link
+                            style={linkStyle}
+                            to="/admin"
+                        >
                             Admin Dashboard
                         </Link>
                     )
@@ -101,13 +140,22 @@ function Navbar() {
 
                     ) : (
 
-                        <div style={{ display: 'flex', gap: '10px' }}>
+                        <div style={{
+                            display: 'flex',
+                            gap: '10px'
+                        }}>
 
-                            <Link style={linkStyle} to="/login">
+                            <Link
+                                style={linkStyle}
+                                to="/login"
+                            >
                                 Login
                             </Link>
 
-                            <Link style={linkStyle} to="/register">
+                            <Link
+                                style={linkStyle}
+                                to="/register"
+                            >
                                 Register
                             </Link>
 
@@ -124,7 +172,7 @@ function Navbar() {
 
 
 
-// STYLES (keeps code clean)
+// STYLES
 const linkStyle = {
     textDecoration: 'none',
     color: '#333',
