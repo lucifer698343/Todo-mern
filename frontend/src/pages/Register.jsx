@@ -12,10 +12,17 @@ function Register() {
         password: ''
     });
 
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+
 
 
 
     const handleChange = (e) => {
+
+        setError('');
+        setSuccess('');
+
         setFormData({
             ...formData,
             [e.target.name]: e.target.value
@@ -29,15 +36,34 @@ function Register() {
 
         e.preventDefault();
 
+        setError('');
+        setSuccess('');
+
+        // FRONTEND VALIDATION
+        if (!formData.name.trim() || !formData.email.trim() || !formData.password.trim()) {
+            return setError('All fields are required');
+        }
+
+        if (formData.password.length < 6) {
+            return setError('Password must be at least 6 characters');
+        }
+
         try {
 
             await API.post('/auth/Registration', formData);
 
-            alert('Registration successful');
-            navigate('/login');
+            setSuccess('Registration successful! Redirecting...');
+
+            setTimeout(() => {
+                navigate('/login');
+            }, 1200);
 
         } catch (error) {
-            alert(error?.response?.data?.message || error.message);
+
+            setError(
+                error?.response?.data?.message ||
+                'Registration failed'
+            );
         }
     };
 
@@ -70,6 +96,40 @@ function Register() {
                 }}>
                     Create Account
                 </h2>
+
+
+
+
+                {/* ERROR MESSAGE */}
+                {error && (
+                    <div style={{
+                        background: '#ffe5e5',
+                        color: '#d8000c',
+                        padding: '10px',
+                        borderRadius: '6px',
+                        marginBottom: '12px',
+                        fontSize: '14px'
+                    }}>
+                        {error}
+                    </div>
+                )}
+
+
+
+
+                {/* SUCCESS MESSAGE */}
+                {success && (
+                    <div style={{
+                        background: '#eafaf1',
+                        color: '#27ae60',
+                        padding: '10px',
+                        borderRadius: '6px',
+                        marginBottom: '12px',
+                        fontSize: '14px'
+                    }}>
+                        {success}
+                    </div>
+                )}
 
 
 
