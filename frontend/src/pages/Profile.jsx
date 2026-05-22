@@ -4,7 +4,12 @@ import API from '../services/api';
 function Profile() {
 
     const [user, setUser] = useState(null);
+
     const [image, setImage] = useState(null);
+
+    const [error, setError] = useState('');
+
+    const [success, setSuccess] = useState('');
 
 
 
@@ -15,10 +20,14 @@ function Profile() {
         try {
 
             const res = await API.get('/auth/Myprofile');
+
             setUser(res.data);
 
         } catch (error) {
-            alert(error?.response?.data?.message || error.message);
+
+            setError(
+                error?.response?.data?.message || error.message
+            );
         }
     };
 
@@ -30,25 +39,45 @@ function Profile() {
 
         e.preventDefault();
 
+        setError('');
+        setSuccess('');
+
+
+
+
+        // VALIDATION
         if (!image) {
-            alert("Please select an image first");
+
+            setError('Please select an image first');
+
             return;
         }
 
         const formData = new FormData();
+
         formData.append('profileImage', image);
+
+
+
 
         try {
 
-            await API.put('/auth/upload-profile', formData);
+            await API.put(
+                '/auth/upload-profile',
+                formData
+            );
 
-            alert('Profile image uploaded');
+            setSuccess('Profile image uploaded successfully');
 
             setImage(null);
+
             fetchProfile();
 
         } catch (error) {
-            alert(error?.response?.data?.message || error.message);
+
+            setError(
+                error?.response?.data?.message || error.message
+            );
         }
     };
 
@@ -56,7 +85,9 @@ function Profile() {
 
 
     useEffect(() => {
+
         fetchProfile();
+
     }, []);
 
 
@@ -76,11 +107,60 @@ function Profile() {
                 textAlign: 'center',
                 marginBottom: '30px'
             }}>
-                <h1 style={{ color: '#333' }}>User Profile</h1>
+
+                <h1 style={{ color: '#333' }}>
+                    User Profile
+                </h1>
+
                 <p style={{ color: '#777' }}>
                     Manage your personal information
                 </p>
+
             </div>
+
+
+
+
+            {/* ERROR MESSAGE */}
+            {
+                error && (
+
+                    <div style={{
+                        maxWidth: '500px',
+                        margin: '0 auto 20px',
+                        background: '#ffe6e6',
+                        color: '#d63031',
+                        padding: '12px',
+                        borderRadius: '8px',
+                        textAlign: 'center',
+                        border: '1px solid #ff7675'
+                    }}>
+                        {error}
+                    </div>
+                )
+            }
+
+
+
+
+            {/* SUCCESS MESSAGE */}
+            {
+                success && (
+
+                    <div style={{
+                        maxWidth: '500px',
+                        margin: '0 auto 20px',
+                        background: '#eafaf1',
+                        color: '#27ae60',
+                        padding: '12px',
+                        borderRadius: '8px',
+                        textAlign: 'center',
+                        border: '1px solid #2ecc71'
+                    }}>
+                        {success}
+                    </div>
+                )
+            }
 
 
 
@@ -146,13 +226,19 @@ function Profile() {
                             {user.details.Name}
                         </h2>
 
-                        <p style={{ color: '#666', marginBottom: '5px' }}>
+                        <p style={{
+                            color: '#666',
+                            marginBottom: '5px'
+                        }}>
                             {user.details.Email}
                         </p>
 
                         <p style={{
                             fontWeight: 'bold',
-                            color: user.details.Role === 'admin' ? 'green' : '#333',
+                            color:
+                                user.details.Role === 'admin'
+                                    ? 'green'
+                                    : '#333',
                             marginBottom: '20px'
                         }}>
                             Role: {user.details.Role}
@@ -161,12 +247,14 @@ function Profile() {
 
 
 
-                        {/* UPLOAD IMAGE */}
+                        {/* IMAGE UPLOAD */}
                         <form onSubmit={uploadImage}>
 
                             <input
                                 type="file"
-                                onChange={(e) => setImage(e.target.files[0])}
+                                onChange={(e) =>
+                                    setImage(e.target.files[0])
+                                }
                                 style={{
                                     marginBottom: '10px'
                                 }}
