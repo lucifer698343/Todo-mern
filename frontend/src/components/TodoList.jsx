@@ -2,11 +2,13 @@ import { useState } from 'react';
 
 import API from '../services/api';
 
-
-
 function TodoList({ todos, fetchTodos }) {
 
     const [editingId, setEditingId] = useState(null);
+
+    const [message, setMessage] = useState('');
+
+    const [error, setError] = useState('');
 
     const [editData, setEditData] = useState({
         title: '',
@@ -16,8 +18,20 @@ function TodoList({ todos, fetchTodos }) {
 
 
 
+    // CLEAR MESSAGES
+    const clearMessages = () => {
+
+        setMessage('');
+        setError('');
+    };
+
+
+
+
     // DELETE TODO
     const deleteTodo = async (id) => {
+
+        clearMessages();
 
         const confirmDelete = window.confirm(
             'Are you sure you want to delete this todo?'
@@ -31,13 +45,16 @@ function TodoList({ todos, fetchTodos }) {
                 `/todo/delete/${id}`
             );
 
-            alert('Todo deleted');
+            setMessage('Todo deleted successfully');
 
             fetchTodos();
 
         } catch (error) {
 
-            alert(error.response.data.message);
+            setError(
+                error?.response?.data?.message ||
+                'Failed to delete todo'
+            );
         }
     };
 
@@ -46,6 +63,8 @@ function TodoList({ todos, fetchTodos }) {
 
     // MARK AS COMPLETED
     const markCompleted = async (id) => {
+
+        clearMessages();
 
         const confirmDone = window.confirm(
             'Mark this todo as completed?'
@@ -62,13 +81,16 @@ function TodoList({ todos, fetchTodos }) {
                 }
             );
 
-            alert('Todo completed');
+            setMessage('Todo marked as completed');
 
             fetchTodos();
 
         } catch (error) {
 
-            alert(error.response.data.message);
+            setError(
+                error?.response?.data?.message ||
+                'Failed to update todo'
+            );
         }
     };
 
@@ -77,6 +99,8 @@ function TodoList({ todos, fetchTodos }) {
 
     // START EDITING
     const startEditing = (todo) => {
+
+        clearMessages();
 
         setEditingId(todo._id);
 
@@ -89,8 +113,44 @@ function TodoList({ todos, fetchTodos }) {
 
 
 
+    // CANCEL EDITING
+    const cancelEdit = () => {
+
+        setEditingId(null);
+
+        setEditData({
+            title: '',
+            description: ''
+        });
+
+        clearMessages();
+    };
+
+
+
+
     // SAVE EDIT
     const saveEdit = async (id) => {
+
+        clearMessages();
+
+
+
+
+        // VALIDATION
+        if (!editData.title.trim()) {
+
+            return setError(
+                'Title cannot be empty'
+            );
+        }
+
+        if (!editData.description.trim()) {
+
+            return setError(
+                'Description cannot be empty'
+            );
+        }
 
         try {
 
@@ -99,7 +159,7 @@ function TodoList({ todos, fetchTodos }) {
                 editData
             );
 
-            alert('Todo updated');
+            setMessage('Todo updated successfully');
 
             setEditingId(null);
 
@@ -107,7 +167,10 @@ function TodoList({ todos, fetchTodos }) {
 
         } catch (error) {
 
-            alert(error.response.data.message);
+            setError(
+                error?.response?.data?.message ||
+                'Failed to update todo'
+            );
         }
     };
 
@@ -118,7 +181,53 @@ function TodoList({ todos, fetchTodos }) {
 
         <div>
 
-            <h2>My Todos</h2>
+            <h2 style={{
+                marginBottom: '20px',
+                color: '#333'
+            }}>
+                My Todos
+            </h2>
+
+
+
+
+            {/* SUCCESS MESSAGE */}
+            {
+                message && (
+
+                    <div style={{
+                        background: '#eafaf1',
+                        color: '#27ae60',
+                        padding: '10px',
+                        borderRadius: '6px',
+                        marginBottom: '15px'
+                    }}>
+                        {message}
+                    </div>
+                )
+            }
+
+
+
+
+            {/* ERROR MESSAGE */}
+            {
+                error && (
+
+                    <div style={{
+                        background: '#ffe5e5',
+                        color: '#d8000c',
+                        padding: '10px',
+                        borderRadius: '6px',
+                        marginBottom: '15px'
+                    }}>
+                        {error}
+                    </div>
+                )
+            }
+
+
+
 
             {
                 todos?.map((todo) => (
@@ -126,9 +235,12 @@ function TodoList({ todos, fetchTodos }) {
                     <div
                         key={todo._id}
                         style={{
-                            border: '1px solid gray',
-                            marginBottom: '10px',
-                            padding: '10px'
+                            border: '1px solid #ddd',
+                            borderRadius: '10px',
+                            marginBottom: '15px',
+                            padding: '15px',
+                            background: '#fff',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.08)'
                         }}
                     >
 
@@ -146,9 +258,8 @@ function TodoList({ todos, fetchTodos }) {
                                                 title: e.target.value
                                             })
                                         }
+                                        style={inputStyle}
                                     />
-
-                                    <br /><br />
 
                                     <textarea
                                         value={editData.description}
@@ -158,17 +269,35 @@ function TodoList({ todos, fetchTodos }) {
                                                 description: e.target.value
                                             })
                                         }
+                                        style={textareaStyle}
                                     />
 
-                                    <br /><br />
 
-                                    <button
-                                        onClick={() =>
-                                            saveEdit(todo._id)
-                                        }
-                                    >
-                                        Save
-                                    </button>
+
+
+                                    {/* ACTION BUTTONS */}
+                                    <div style={{
+                                        display: 'flex',
+                                        gap: '10px'
+                                    }}>
+
+                                        <button
+                                            onClick={() =>
+                                                saveEdit(todo._id)
+                                            }
+                                            style={saveBtn}
+                                        >
+                                            Save
+                                        </button>
+
+                                        <button
+                                            onClick={cancelEdit}
+                                            style={cancelBtn}
+                                        >
+                                            Cancel
+                                        </button>
+
+                                    </div>
 
                                 </div>
 
@@ -176,21 +305,37 @@ function TodoList({ todos, fetchTodos }) {
 
                                 <div>
 
-                                    <h3>{todo.title}</h3>
+                                    <h3 style={{
+                                        marginBottom: '8px'
+                                    }}>
+                                        {todo.title}
+                                    </h3>
 
-                                    <p>{todo.description}</p>
+                                    <p style={{
+                                        color: '#555'
+                                    }}>
+                                        {todo.description}
+                                    </p>
 
                                     <p>
                                         Status:
                                         {' '}
-                                        {todo.status}
+                                        <b>
+                                            {todo.status}
+                                        </b>
                                     </p>
+
+
+
 
                                     {/* DONE BUTTON */}
                                     {
                                         todo.status === 'completed' ? (
 
-                                            <button disabled>
+                                            <button
+                                                disabled
+                                                style={completedBtn}
+                                            >
                                                 Completed
                                             </button>
 
@@ -200,6 +345,7 @@ function TodoList({ todos, fetchTodos }) {
                                                 onClick={() =>
                                                     markCompleted(todo._id)
                                                 }
+                                                style={doneBtn}
                                             >
                                                 Done
                                             </button>
@@ -208,27 +354,35 @@ function TodoList({ todos, fetchTodos }) {
 
                                     {' '}
 
-                                    {/* EDIT BUTTON */}
-                                   {
-    todo.status !== 'completed' && (
 
-        <button
-            onClick={() =>
-                startEditing(todo)
-            }
-        >
-            Edit
-        </button>
-    )
-}
+
+
+                                    {/* EDIT BUTTON */}
+                                    {
+                                        todo.status !== 'completed' && (
+
+                                            <button
+                                                onClick={() =>
+                                                    startEditing(todo)
+                                                }
+                                                style={editBtn}
+                                            >
+                                                Edit
+                                            </button>
+                                        )
+                                    }
 
                                     {' '}
+
+
+
 
                                     {/* DELETE BUTTON */}
                                     <button
                                         onClick={() =>
                                             deleteTodo(todo._id)
                                         }
+                                        style={deleteBtn}
                                     >
                                         Delete
                                     </button>
@@ -244,5 +398,80 @@ function TodoList({ todos, fetchTodos }) {
         </div>
     );
 }
+
+
+
+
+// STYLES
+const inputStyle = {
+    width: '100%',
+    padding: '10px',
+    marginBottom: '10px',
+    borderRadius: '6px',
+    border: '1px solid #ccc'
+};
+
+const textareaStyle = {
+    width: '100%',
+    minHeight: '100px',
+    padding: '10px',
+    marginBottom: '10px',
+    borderRadius: '6px',
+    border: '1px solid #ccc',
+    resize: 'none'
+};
+
+const saveBtn = {
+    background: '#333',
+    color: '#fff',
+    border: 'none',
+    padding: '10px 15px',
+    borderRadius: '6px',
+    cursor: 'pointer'
+};
+
+const cancelBtn = {
+    background: '#95a5a6',
+    color: '#fff',
+    border: 'none',
+    padding: '10px 15px',
+    borderRadius: '6px',
+    cursor: 'pointer'
+};
+
+const doneBtn = {
+    background: '#27ae60',
+    color: '#fff',
+    border: 'none',
+    padding: '8px 12px',
+    borderRadius: '6px',
+    cursor: 'pointer'
+};
+
+const completedBtn = {
+    background: '#95a5a6',
+    color: '#fff',
+    border: 'none',
+    padding: '8px 12px',
+    borderRadius: '6px'
+};
+
+const editBtn = {
+    background: '#2980b9',
+    color: '#fff',
+    border: 'none',
+    padding: '8px 12px',
+    borderRadius: '6px',
+    cursor: 'pointer'
+};
+
+const deleteBtn = {
+    background: '#e74c3c',
+    color: '#fff',
+    border: 'none',
+    padding: '8px 12px',
+    borderRadius: '6px',
+    cursor: 'pointer'
+};
 
 export default TodoList;
