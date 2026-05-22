@@ -9,6 +9,8 @@ function Login() {
 
     const navigate = useNavigate();
 
+    const [errorMessage, setErrorMessage] = useState('');
+
     const [formData, setFormData] = useState({
         email: '',
         password: ''
@@ -18,6 +20,9 @@ function Login() {
 
 
     const handleChange = (e) => {
+
+        // CLEAR ERROR WHILE TYPING
+        setErrorMessage('');
 
         setFormData({
             ...formData,
@@ -40,8 +45,6 @@ function Login() {
 
             localStorage.setItem('token', token);
 
-            alert('Login successful');
-
 
 
 
@@ -59,7 +62,9 @@ function Login() {
 
         } catch (error) {
 
-            alert(error?.response?.data?.message || error.message);
+            setErrorMessage(
+                error?.response?.data?.message || 'Login failed'
+            );
         }
     };
 
@@ -92,6 +97,29 @@ function Login() {
                 }}>
                     Login
                 </h2>
+
+
+
+
+
+                {/* ERROR MESSAGE */}
+                {
+                    errorMessage && (
+
+                        <div style={{
+                            background: '#ffe5e5',
+                            color: '#d8000c',
+                            padding: '10px',
+                            borderRadius: '6px',
+                            marginBottom: '15px',
+                            textAlign: 'center',
+                            fontSize: '14px'
+                        }}>
+                            {errorMessage}
+                        </div>
+                    )
+                }
+
 
 
 
