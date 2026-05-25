@@ -10,7 +10,7 @@ const registerUser=asyncHandler(async(req,res)=>{
     const errors=validationResult(req);
    if(!errors.isEmpty()){
 
-    return res.status(400)
+     res.status(400)
     throw new Error(errors.array()[0].msg);
 }
     
@@ -44,6 +44,58 @@ const registerUser=asyncHandler(async(req,res)=>{
     
 })
 
+//google register/ Login
+const googleAuth = asyncHandler(async (req, res) => {
+
+    const { name, email } = req.body;
+
+    if (!email) {
+
+        res.status(400);
+
+        throw new Error("Email is required");
+    }
+
+    // CHECK EXISTING USER
+    let user = await User.findOne({ email });
+
+    // CREATE USER IF NOT EXISTS
+    if (!user) {
+
+        user = await User.create({
+
+            name,
+            email,
+
+            // random password because google login doesn't use password
+            password: await bcrypt.hash(
+                Math.random().toString(36),
+                10
+            )
+        });
+    }
+
+    // CREATE TOKEN
+    const token = jwt.sign(
+        {
+            id: user._id,
+            email: user.email,
+            role: user.role
+        },
+
+        process.env.Secret_key,
+
+        {
+            expiresIn: "2h"
+        }
+    );
+     res.status(200).json({
+
+        message: "Google authentication successful",
+
+        token
+    });
+});
 
 // LOGIN USER
 const userLogin = asyncHandler(async (req, res) => {
@@ -151,6 +203,7 @@ const uploadProfileImage = asyncHandler(async (req, res) => {
 
 module.exports={
     registerUser,
+    googleAuth,
     userLogin,
     Profile,
     uploadProfileImage
