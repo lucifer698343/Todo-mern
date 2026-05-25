@@ -2,6 +2,13 @@ import { useState } from 'react';
 import API from '../services/api';
 import { useNavigate } from 'react-router-dom';
 
+import {
+    GoogleAuthProvider,
+    signInWithPopup
+} from 'firebase/auth';
+
+import { auth } from '../firebase';
+
 function Register() {
 
     const navigate = useNavigate();
@@ -14,7 +21,6 @@ function Register() {
 
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-
 
 
 
@@ -31,6 +37,51 @@ function Register() {
 
 
 
+    // GOOGLE REGISTER (FIXED)
+    const googleRegister = async () => {
+
+        try {
+
+            const provider = new GoogleAuthProvider();
+
+            // ✅ FORCE ACCOUNT CHOOSER EVERY TIME
+            provider.setCustomParameters({
+                prompt: 'select_account'
+            });
+
+            const result = await signInWithPopup(
+                auth,
+                provider
+            );
+
+            const user = result.user;
+
+            const res = await API.post(
+                '/auth/google-auth',
+                {
+                    name: user.displayName,
+                    email: user.email,
+                    image: user.photoURL
+                }
+            );
+
+            localStorage.setItem(
+                'token',
+                res.data.token
+            );
+
+            navigate('/dashboard');
+
+        } catch (error) {
+
+            setError(
+                error?.response?.data?.message ||
+                error.message
+            );
+        }
+    };
+
+
 
     const handleSubmit = async (e) => {
 
@@ -39,8 +90,11 @@ function Register() {
         setError('');
         setSuccess('');
 
-        // FRONTEND VALIDATION
-        if (!formData.name.trim() || !formData.email.trim() || !formData.password.trim()) {
+        if (
+            !formData.name.trim() ||
+            !formData.email.trim() ||
+            !formData.password.trim()
+        ) {
             return setError('All fields are required');
         }
 
@@ -66,7 +120,6 @@ function Register() {
             );
         }
     };
-
 
 
 
@@ -99,16 +152,14 @@ function Register() {
 
 
 
-
-                {/* ERROR MESSAGE */}
+                {/* ERROR */}
                 {error && (
                     <div style={{
                         background: '#ffe5e5',
                         color: '#d8000c',
                         padding: '10px',
                         borderRadius: '6px',
-                        marginBottom: '12px',
-                        fontSize: '14px'
+                        marginBottom: '12px'
                     }}>
                         {error}
                     </div>
@@ -116,16 +167,14 @@ function Register() {
 
 
 
-
-                {/* SUCCESS MESSAGE */}
+                {/* SUCCESS */}
                 {success && (
                     <div style={{
                         background: '#eafaf1',
                         color: '#27ae60',
                         padding: '10px',
                         borderRadius: '6px',
-                        marginBottom: '12px',
-                        fontSize: '14px'
+                        marginBottom: '12px'
                     }}>
                         {success}
                     </div>
@@ -133,10 +182,8 @@ function Register() {
 
 
 
-
                 <form onSubmit={handleSubmit}>
 
-                    {/* NAME */}
                     <input
                         type="text"
                         name="name"
@@ -145,7 +192,6 @@ function Register() {
                         style={inputStyle}
                     />
 
-                    {/* EMAIL */}
                     <input
                         type="email"
                         name="email"
@@ -154,7 +200,6 @@ function Register() {
                         style={inputStyle}
                     />
 
-                    {/* PASSWORD */}
                     <input
                         type="password"
                         name="password"
@@ -165,12 +210,21 @@ function Register() {
 
 
 
-
                     <button
                         type="submit"
                         style={buttonStyle}
                     >
                         Register
+                    </button>
+
+
+
+                    <button
+                        type="button"
+                        onClick={googleRegister}
+                        style={googleBtn}
+                    >
+                        Continue with Google
                     </button>
 
                 </form>
@@ -180,7 +234,6 @@ function Register() {
         </div>
     );
 }
-
 
 
 
@@ -200,6 +253,18 @@ const buttonStyle = {
     background: '#333',
     color: 'white',
     border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontWeight: 'bold'
+};
+
+const googleBtn = {
+    width: '100%',
+    padding: '10px',
+    marginTop: '10px',
+    background: '#fff',
+    color: '#333',
+    border: '1px solid #ccc',
     borderRadius: '6px',
     cursor: 'pointer',
     fontWeight: 'bold'
