@@ -5,24 +5,27 @@ import { Link } from 'react-router-dom';
 import API from '../services/api';
 import { useNavigate } from 'react-router-dom';
 
+import {
+    GoogleAuthProvider,
+    signInWithPopup
+} from 'firebase/auth';
+
+import { auth } from '../firebase';
+
 function Login() {
 
     const navigate = useNavigate();
-
-    const [errorMessage, setErrorMessage] = useState('');
 
     const [formData, setFormData] = useState({
         email: '',
         password: ''
     });
 
+    const [error, setError] = useState('');
 
 
 
     const handleChange = (e) => {
-
-        // CLEAR ERROR WHILE TYPING
-        setErrorMessage('');
 
         setFormData({
             ...formData,
@@ -32,42 +35,83 @@ function Login() {
 
 
 
-
-    const handleSubmit = async (e) => {
-
-        e.preventDefault();
+    // GOOGLE LOGIN (NEW)
+    const googleLogin = async () => {
 
         try {
 
-            const res = await API.post('/auth/login', formData);
+            const provider = new GoogleAuthProvider();
 
-            const token = res.data.token;
+            // ✅ FORCE ACCOUNT SELECT
+            provider.setCustomParameters({
+                prompt: 'select_account'
+            });
 
-            localStorage.setItem('token', token);
+            const result = await signInWithPopup(auth, provider);
 
+            const user = result.user;
 
+            const res = await API.post('/auth/google-auth', {
+                name: user.displayName,
+                email: user.email,
+                image: user.photoURL
+            });
 
+            localStorage.setItem('token', res.data.token);
 
-            // decode role safely
-            const decoded = jwtDecode(token);
+            const decoded = jwtDecode(res.data.token);
 
             if (decoded.role === 'admin') {
-
                 navigate('/admin');
-
             } else {
-
                 navigate('/dashboard');
             }
 
         } catch (error) {
 
-            setErrorMessage(
-                error?.response?.data?.message || 'Login failed'
+            setError(
+                error?.response?.data?.message ||
+                error.message
             );
         }
     };
 
+
+
+    const handleSubmit = async (e) => {
+
+        e.preventDefault();
+
+        setError('');
+
+        try {
+
+            const res = await API.post(
+                '/auth/login',
+                formData
+            );
+
+            localStorage.setItem(
+                'token',
+                res.data.token
+            );
+
+            const decoded = jwtDecode(res.data.token);
+
+            if (decoded.role === 'admin') {
+                navigate('/admin');
+            } else {
+                navigate('/dashboard');
+            }
+
+        } catch (error) {
+
+            setError(
+                error?.response?.data?.message ||
+                error.message
+            );
+        }
+    };
 
 
 
@@ -100,33 +144,23 @@ function Login() {
 
 
 
-
-
-                {/* ERROR MESSAGE */}
-                {
-                    errorMessage && (
-
-                        <div style={{
-                            background: '#ffe5e5',
-                            color: '#d8000c',
-                            padding: '10px',
-                            borderRadius: '6px',
-                            marginBottom: '15px',
-                            textAlign: 'center',
-                            fontSize: '14px'
-                        }}>
-                            {errorMessage}
-                        </div>
-                    )
-                }
-
-
+                {/* ERROR */}
+                {error && (
+                    <div style={{
+                        background: '#ffe5e5',
+                        color: '#d8000c',
+                        padding: '10px',
+                        borderRadius: '6px',
+                        marginBottom: '12px'
+                    }}>
+                        {error}
+                    </div>
+                )}
 
 
 
                 <form onSubmit={handleSubmit}>
 
-                    {/* EMAIL */}
                     <input
                         type="email"
                         name="email"
@@ -135,7 +169,6 @@ function Login() {
                         style={inputStyle}
                     />
 
-                    {/* PASSWORD */}
                     <input
                         type="password"
                         name="password"
@@ -146,7 +179,6 @@ function Login() {
 
 
 
-
                     <button
                         type="submit"
                         style={buttonStyle}
@@ -154,32 +186,29 @@ function Login() {
                         Login
                     </button>
 
+
+
+                    {/* GOOGLE LOGIN BUTTON */}
+                    <button
+                        type="button"
+                        onClick={googleLogin}
+                        style={googleBtn}
+                    >
+                        Continue with Google
+                    </button>
+
                 </form>
 
 
 
-
-
-                {/* SIGNUP OPTION */}
                 <p style={{
                     marginTop: '15px',
-                    textAlign: 'center',
-                    color: '#555'
+                    textAlign: 'center'
                 }}>
-                    Don't have an account?
-                    {' '}
-
-                    <Link
-                        to="/register"
-                        style={{
-                            color: '#333',
-                            fontWeight: 'bold',
-                            textDecoration: 'none'
-                        }}
-                    >
+                    Don't have an account? {' '}
+                    <Link to="/register">
                         Signup
                     </Link>
-
                 </p>
 
             </div>
@@ -190,15 +219,13 @@ function Login() {
 
 
 
-
 // STYLES
 const inputStyle = {
     width: '100%',
     padding: '10px',
     marginBottom: '12px',
     borderRadius: '6px',
-    border: '1px solid #ccc',
-    outline: 'none'
+    border: '1px solid #ccc'
 };
 
 const buttonStyle = {
@@ -207,6 +234,18 @@ const buttonStyle = {
     background: '#333',
     color: 'white',
     border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontWeight: 'bold'
+};
+
+const googleBtn = {
+    width: '100%',
+    padding: '10px',
+    marginTop: '10px',
+    background: '#fff',
+    color: '#333',
+    border: '1px solid #ccc',
     borderRadius: '6px',
     cursor: 'pointer',
     fontWeight: 'bold'
