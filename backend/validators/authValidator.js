@@ -1,28 +1,23 @@
-const {body}=require('express-validator')
+const { body } = require('express-validator');
 
-const registerValidation=[
-    body('name')
-        .notEmpty().withMessage("your name cannot be empty"),
-
-        body('email')
+// REGISTER STEP 1 (ONLY EMAIL)
+const registerValidation = [
+    body('email')
         .notEmpty().withMessage("email cannot be empty")
-        .isEmail().withMessage("invalid email format"),
+        .isEmail().withMessage("invalid email format")
+];
 
-        body('password')
-        .notEmpty().withMessage("password cannot be empty")
-        .isLength({min:6, max:12})
-]
 
-const loginValidation=[
+// LOGIN (UNCHANGED)
+const loginValidation = [
     body('email')
         .isEmail().withMessage('Invalid email'),
 
-        body('password')
+    body('password')
         .notEmpty().withMessage('Password required')
-]
+];
 
-
-module.exports={
+module.exports = {
     registerValidation,
     loginValidation
-}
+};

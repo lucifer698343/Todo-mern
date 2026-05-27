@@ -6,6 +6,8 @@ import Login from './pages/Login';
 
 import Register from './pages/Register';
 
+import VerifyOtp from './pages/VerifyOtp';
+
 import Dashboard from './pages/Dashboard';
 
 import Profile from './pages/Profile';
@@ -32,6 +34,11 @@ function App() {
                 <Route
                     path="/register"
                     element={<Register />}
+                />
+
+                <Route
+                    path="/verify-otp"
+                    element={<VerifyOtp />}
                 />
 
                 <Route

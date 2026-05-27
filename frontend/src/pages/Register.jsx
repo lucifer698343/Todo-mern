@@ -13,14 +13,14 @@ function Register() {
 
     const navigate = useNavigate();
 
+    // ONLY EMAIL NOW
     const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        password: ''
+        email: ''
     });
 
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+
 
 
 
@@ -37,14 +37,14 @@ function Register() {
 
 
 
-    // GOOGLE REGISTER (FIXED)
+
+    // GOOGLE REGISTER
     const googleRegister = async () => {
 
         try {
 
             const provider = new GoogleAuthProvider();
 
-            // ✅ FORCE ACCOUNT CHOOSER EVERY TIME
             provider.setCustomParameters({
                 prompt: 'select_account'
             });
@@ -70,6 +70,8 @@ function Register() {
                 res.data.token
             );
 
+            setSuccess('Login successful');
+
             navigate('/dashboard');
 
         } catch (error) {
@@ -83,114 +85,87 @@ function Register() {
 
 
 
+
     const handleSubmit = async (e) => {
+    e.preventDefault();
 
-        e.preventDefault();
+    setError('');
+    setSuccess('');
 
-        setError('');
-        setSuccess('');
+    if (!formData.email.trim()) {
+        return setError('Email is required');
+    }
 
-        if (
-            !formData.name.trim() ||
-            !formData.email.trim() ||
-            !formData.password.trim()
-        ) {
-            return setError('All fields are required');
-        }
+    try {
+        const res = await API.post('/auth/Registration', formData);
 
-        if (formData.password.length < 6) {
-            return setError('Password must be at least 6 characters');
-        }
+        setSuccess(res.data.message);
 
-        try {
+        // ✅ SAVE EMAIL (IMPORTANT FIX)
+        localStorage.setItem('otpEmail', formData.email);
 
-            await API.post('/auth/Registration', formData);
+        // ✅ NAVIGATE TO OTP PAGE
+        setTimeout(() => {
+            navigate('/verify-otp', {
+                state: { email: formData.email }
+            });
+        }, 1000);
 
-            setSuccess('Registration successful! Redirecting...');
+    } catch (error) {
+        setError(
+            error?.response?.data?.message ||
+            'Failed to send OTP'
+        );
+    }
+};
 
-            setTimeout(() => {
-                navigate('/login');
-            }, 1200);
-
-        } catch (error) {
-
-            setError(
-                error?.response?.data?.message ||
-                'Registration failed'
-            );
-        }
-    };
 
 
 
     return (
 
-        <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '100vh',
-            backgroundColor: '#f5f6fa',
-            fontFamily: 'Arial, sans-serif'
-        }}>
+        <div style={pageStyle}>
 
-            <div style={{
-                background: '#fff',
-                padding: '30px',
-                borderRadius: '12px',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-                width: '350px'
-            }}>
+            <div style={cardStyle}>
 
-                <h2 style={{
-                    textAlign: 'center',
-                    marginBottom: '20px',
-                    color: '#333'
-                }}>
+                <h2 style={titleStyle}>
                     Create Account
                 </h2>
+
+                <p style={subText}>
+                    Enter your email to receive OTP
+                </p>
+
 
 
 
                 {/* ERROR */}
-                {error && (
-                    <div style={{
-                        background: '#ffe5e5',
-                        color: '#d8000c',
-                        padding: '10px',
-                        borderRadius: '6px',
-                        marginBottom: '12px'
-                    }}>
-                        {error}
-                    </div>
-                )}
+                {
+                    error && (
+
+                        <div style={errorBox}>
+                            {error}
+                        </div>
+                    )
+                }
+
 
 
 
                 {/* SUCCESS */}
-                {success && (
-                    <div style={{
-                        background: '#eafaf1',
-                        color: '#27ae60',
-                        padding: '10px',
-                        borderRadius: '6px',
-                        marginBottom: '12px'
-                    }}>
-                        {success}
-                    </div>
-                )}
+                {
+                    success && (
+
+                        <div style={successBox}>
+                            {success}
+                        </div>
+                    )
+                }
+
 
 
 
                 <form onSubmit={handleSubmit}>
-
-                    <input
-                        type="text"
-                        name="name"
-                        placeholder="Enter Name"
-                        onChange={handleChange}
-                        style={inputStyle}
-                    />
 
                     <input
                         type="email"
@@ -200,13 +175,6 @@ function Register() {
                         style={inputStyle}
                     />
 
-                    <input
-                        type="password"
-                        name="password"
-                        placeholder="Enter Password"
-                        onChange={handleChange}
-                        style={inputStyle}
-                    />
 
 
 
@@ -214,8 +182,9 @@ function Register() {
                         type="submit"
                         style={buttonStyle}
                     >
-                        Register
+                        Send OTP
                     </button>
+
 
 
 
@@ -237,7 +206,38 @@ function Register() {
 
 
 
+
 // STYLES
+const pageStyle = {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100vh',
+    backgroundColor: '#f5f6fa',
+    fontFamily: 'Arial, sans-serif'
+};
+
+const cardStyle = {
+    background: '#fff',
+    padding: '30px',
+    borderRadius: '12px',
+    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+    width: '350px'
+};
+
+const titleStyle = {
+    textAlign: 'center',
+    marginBottom: '10px',
+    color: '#333'
+};
+
+const subText = {
+    textAlign: 'center',
+    fontSize: '14px',
+    color: '#666',
+    marginBottom: '20px'
+};
+
 const inputStyle = {
     width: '100%',
     padding: '10px',
@@ -268,6 +268,22 @@ const googleBtn = {
     borderRadius: '6px',
     cursor: 'pointer',
     fontWeight: 'bold'
+};
+
+const errorBox = {
+    background: '#ffe5e5',
+    color: '#d8000c',
+    padding: '10px',
+    borderRadius: '6px',
+    marginBottom: '12px'
+};
+
+const successBox = {
+    background: '#eafaf1',
+    color: '#27ae60',
+    padding: '10px',
+    borderRadius: '6px',
+    marginBottom: '12px'
 };
 
 export default Register;
