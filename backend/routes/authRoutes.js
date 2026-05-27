@@ -13,6 +13,7 @@ const{
 const{
     registerUser,
     googleAuth,
+    verifyOtp,
     userLogin,
     Profile,
     uploadProfileImage
@@ -27,6 +28,11 @@ router.post('/Registration',registerValidation,registerUser
 router.post(
     '/google-auth',
     googleAuth
+);
+//verify otp
+router.post(
+    '/verify-otp',
+    verifyOtp
 );
 //login to user acccount
 router.post('/login',loginValidation,userLogin)
