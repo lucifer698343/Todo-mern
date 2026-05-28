@@ -1,74 +1,53 @@
-const nodemailer = require('nodemailer');
+const SibApiV3Sdk = require('sib-api-v3-sdk');
 
-const transporter = nodemailer.createTransport({
+const client = SibApiV3Sdk.ApiClient.instance;
 
-    host: 'smtp-relay.brevo.com',
+// AUTH
+client.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
 
-    port: 587,
+const tranEmailApi = new SibApiV3Sdk.TransactionalEmailsApi();
 
-    secure: false,
-
-    auth: {
-
-        user: process.env.BREVO_SMTP_USER,
-
-        pass: process.env.BREVO_SMTP_PASS
-    }
-});
-transporter.verify((error, success) => {
-
-    if (error) {
-
-        console.log("SMTP ERROR:", error);
-
-    } else {
-
-        console.log("SMTP SERVER READY");
-    }
-});
 
 
 const sendEmail = async (email, otp) => {
 
     try {
 
-        const mailOptions = {
+        const sendSmtpEmail = {
+            to: [
+                {
+                    email: email
+                }
+            ],
 
-            from: '"Todo App" <aayushintern17@gmail.com>',
+            sender: {
+                name: "Todo App",
+                email: "aayushintern17@gmail.com"
+            },
 
-            to: email,
+            subject: "Verify Your Account",
 
-            subject: 'Verify Your Account',
-
-            html: `
-
-                <div style="font-family: Arial, sans-serif; padding: 20px;">
-
+            htmlContent: `
+                <div style="font-family: Arial; padding: 20px;">
                     <h2>Email Verification</h2>
-
                     <p>Your OTP is:</p>
-
-                    <h1 style="color: #2563eb; letter-spacing: 2px;">
-                        ${otp}
-                    </h1>
-
+                    <h1 style="color:#2563eb">${otp}</h1>
                     <p>This OTP expires in 5 minutes.</p>
-
                 </div>
             `
         };
 
 
 
-        await transporter.sendMail(mailOptions);
+        await tranEmailApi.sendTransacEmail(sendSmtpEmail);
 
-        console.log('Email sent successfully');
+        console.log("Email sent successfully");
 
     } catch (error) {
 
-        console.log('Email sending failed:', error);
+        console.log("Email sending failed:", error);
 
-        throw new Error('Failed to send email');
+        throw new Error("Email failed to send");
     }
 };
 
