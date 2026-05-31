@@ -14,6 +14,8 @@ const{
     registerUser,
     googleAuth,
     verifyOtp,
+    forgotPassword,
+    resetPassword,
     userLogin,
     Profile,
     uploadProfileImage
@@ -34,6 +36,12 @@ router.post(
     '/verify-otp',
     verifyOtp
 );
+
+//forgot passwordd
+router.post('/forgot-password', forgotPassword);
+
+//reset password
+router.post('/reset-password',resetPassword)
 //login to user acccount
 router.post('/login',loginValidation,userLogin)
 

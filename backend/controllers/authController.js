@@ -1,10 +1,12 @@
 const User = require('../models/User')
 const otpStore = require('../utils/otpStore');
+const resetOtpStore = require('../utils/resetOtpStore');
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const { validationResult } = require('express-validator')
 const asyncHandler = require('express-async-handler');
 const sendEmail = require('../utils/sendEmail');
+
 
 
 
@@ -194,6 +196,142 @@ const verifyOtp = asyncHandler(async (req, res) => {
     });
 });
 
+// FORGOT PASSWORD
+const forgotPassword = asyncHandler(async (req, res) => {
+
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+
+        res.status(404);
+
+        throw new Error('User not found');
+    }
+
+    // GENERATE OTP
+    const otp = Math.floor(
+        100000 + Math.random() * 900000
+    ).toString();
+
+    // STORE OTP
+    resetOtpStore[email] = {
+
+        otp,
+
+        expires: Date.now() + 5 * 60 * 1000
+    };
+
+    // SEND EMAIL
+    await sendEmail(email, otp);
+
+    res.status(200).json({
+
+        message: 'Password reset OTP sent to your email'
+    });
+});
+// RESET PASSWORD
+const resetPassword = asyncHandler(async (req, res) => {
+
+    const {
+
+        email,
+
+        otp,
+
+        newPassword
+
+    } = req.body;
+
+
+
+
+    const storedOtpData = resetOtpStore[email];
+
+
+
+
+    if (!storedOtpData) {
+
+        res.status(400);
+
+        throw new Error(
+            'No password reset request found'
+        );
+    }
+
+
+
+
+    if (String(storedOtpData.otp) !==String(otp)) {
+
+        res.status(400);
+
+        throw new Error('Invalid OTP');
+    }
+
+
+
+
+    if (
+        storedOtpData.expires < Date.now()
+    ) {
+
+        delete resetOtpStore[email];
+
+        res.status(400);
+
+        throw new Error('OTP expired');
+    }
+
+
+
+
+    const user = await User.findOne({ email });
+
+
+
+
+    if (!user) {
+
+        delete resetOtpStore[email];
+
+        res.status(404);
+
+        throw new Error('User not found');
+    }
+
+
+
+
+    // HASH NEW PASSWORD
+    const passwordHash = await bcrypt.hash(
+        newPassword,
+        10
+    );
+
+
+
+
+    user.password = passwordHash;
+
+    await user.save();
+
+
+
+
+    delete resetOtpStore[email];
+
+
+
+
+    res.status(200).json({
+
+        message: 'Password reset successful'
+    });
+});
+
 // LOGIN USER
 const userLogin = asyncHandler(async (req, res) => {
 
@@ -357,9 +495,13 @@ module.exports = {
 
     verifyOtp,
 
+    forgotPassword,
+
+    resetPassword,
+
     userLogin,
 
     Profile,
 
     uploadProfileImage
-}
+};

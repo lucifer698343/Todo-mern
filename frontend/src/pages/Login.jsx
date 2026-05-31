@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { jwtDecode } from 'jwt-decode';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import API from '../services/api';
-import { useNavigate } from 'react-router-dom';
 
 import {
     GoogleAuthProvider,
@@ -23,8 +22,6 @@ function Login() {
 
     const [error, setError] = useState('');
 
-
-
     const handleChange = (e) => {
 
         setFormData({
@@ -33,16 +30,13 @@ function Login() {
         });
     };
 
-
-
-    // GOOGLE LOGIN (NEW)
+    // GOOGLE LOGIN
     const googleLogin = async () => {
 
         try {
 
             const provider = new GoogleAuthProvider();
 
-            // ✅ FORCE ACCOUNT SELECT
             provider.setCustomParameters({
                 prompt: 'select_account'
             });
@@ -76,8 +70,7 @@ function Login() {
         }
     };
 
-
-
+    // NORMAL LOGIN
     const handleSubmit = async (e) => {
 
         e.preventDefault();
@@ -91,10 +84,7 @@ function Login() {
                 formData
             );
 
-            localStorage.setItem(
-                'token',
-                res.data.token
-            );
+            localStorage.setItem('token', res.data.token);
 
             const decoded = jwtDecode(res.data.token);
 
@@ -112,8 +102,6 @@ function Login() {
             );
         }
     };
-
-
 
     return (
 
@@ -142,8 +130,6 @@ function Login() {
                     Login
                 </h2>
 
-
-
                 {/* ERROR */}
                 {error && (
                     <div style={{
@@ -156,8 +142,6 @@ function Login() {
                         {error}
                     </div>
                 )}
-
-
 
                 <form onSubmit={handleSubmit}>
 
@@ -177,8 +161,6 @@ function Login() {
                         style={inputStyle}
                     />
 
-
-
                     <button
                         type="submit"
                         style={buttonStyle}
@@ -186,9 +168,7 @@ function Login() {
                         Login
                     </button>
 
-
-
-                    {/* GOOGLE LOGIN BUTTON */}
+                    {/* GOOGLE LOGIN */}
                     <button
                         type="button"
                         onClick={googleLogin}
@@ -199,13 +179,33 @@ function Login() {
 
                 </form>
 
+                {/* 🔥 FORGOT PASSWORD LINK */}
+                <div style={{
+                    marginTop: '12px',
+                    textAlign: 'right'
+                }}>
+                    <button
+                        type="button"
+                        onClick={() => navigate('/forgot-password')}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#007bff',
+                            cursor: 'pointer',
+                            fontSize: '13px',
+                            textDecoration: 'underline'
+                        }}
+                    >
+                        Forgot Password?
+                    </button>
+                </div>
 
-
+                {/* SIGNUP LINK */}
                 <p style={{
                     marginTop: '15px',
                     textAlign: 'center'
                 }}>
-                    Don't have an account? {' '}
+                    Don't have an account?{' '}
                     <Link to="/register">
                         Signup
                     </Link>
@@ -216,8 +216,6 @@ function Login() {
         </div>
     );
 }
-
-
 
 // STYLES
 const inputStyle = {
