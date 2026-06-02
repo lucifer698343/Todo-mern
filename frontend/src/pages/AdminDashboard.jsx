@@ -6,9 +6,8 @@ function AdminDashboard() {
 
     const [users, setUsers] = useState([]);
     const [todos, setTodos] = useState([]);
-
-
-
+    const [notifications, setNotifications] = useState([]);
+    const [showNotifications, setShowNotifications] = useState(false);
 
     // GET CURRENT ADMIN ID
     const token = localStorage.getItem('token');
@@ -24,82 +23,76 @@ function AdminDashboard() {
         }
     }
 
-
-
-
     // FETCH USERS
     const fetchUsers = async () => {
-
         try {
             const res = await API.get('/admin/users');
             setUsers(res.data.users);
-
         } catch (error) {
             alert(error?.response?.data?.message || error.message);
         }
     };
-
-
-
 
     // FETCH TODOS
     const fetchTodos = async () => {
-
         try {
             const res = await API.get('/admin/todos');
             setTodos(res.data.todos);
-
         } catch (error) {
             alert(error?.response?.data?.message || error.message);
         }
     };
 
+    // FETCH NOTIFICATIONS
+    const fetchNotifications = async () => {
+        try {
+            const res = await API.get('/admin/notifications');
+            setNotifications(res.data.notifications);
+        } catch (error) {
+            console.log(error);
+        }
+    };
 
-
+    // MARK ALL AS READ
+    const markAllAsRead = async () => {
+        try {
+            await API.put('/admin/notifications/read');
+            fetchNotifications();
+        } catch (error) {
+            alert(error?.response?.data?.message || error.message);
+        }
+    };
 
     // DELETE USER
     const deleteUser = async (id) => {
-
         const ok = window.confirm('Are you sure you want to delete this user?');
         if (!ok) return;
 
         try {
             await API.delete(`/admin/user/${id}`);
-
             alert('User deleted successfully');
             fetchUsers();
-
         } catch (error) {
             alert(error?.response?.data?.message || error.message);
         }
     };
 
-
-
-
     // DELETE TODO
     const deleteTodo = async (id) => {
-
         const ok = window.confirm('Are you sure you want to delete this todo?');
         if (!ok) return;
 
         try {
             await API.delete(`/admin/todo/${id}`);
-
             alert('Todo deleted successfully');
             fetchTodos();
-
         } catch (error) {
             alert(error?.response?.data?.message || error.message);
         }
     };
 
-
-
-
     // CHANGE ROLE
     const changeRole = async (id, currentRole) => {
-
         const newRole = currentRole === 'admin' ? 'user' : 'admin';
 
         const ok = window.confirm(`Change role to "${newRole}"?`);
@@ -112,25 +105,29 @@ function AdminDashboard() {
 
             alert('User role updated successfully');
             fetchUsers();
-
         } catch (error) {
             alert(error?.response?.data?.message || error.message);
         }
     };
 
-
-
-
+    // AUTO LOAD + AUTO REFRESH NOTIFICATIONS
     useEffect(() => {
+
         fetchUsers();
         fetchTodos();
+        fetchNotifications();
+
+        const interval = setInterval(() => {
+            fetchNotifications();
+        }, 5000);
+
+        return () => clearInterval(interval);
+
     }, []);
 
-
-
+    const unreadCount = notifications.filter(n => !n.isRead).length;
 
     return (
-
         <div style={{
             padding: '25px',
             fontFamily: 'Arial, sans-serif',
@@ -139,29 +136,114 @@ function AdminDashboard() {
         }}>
 
             {/* HEADER */}
-            <h1 style={{
-                textAlign: 'center',
-                marginBottom: '30px',
-                color: '#333'
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '30px'
             }}>
-                Admin Dashboard
-            </h1>
 
+                <h1 style={{ color: '#333' }}>
+                    Admin Dashboard
+                </h1>
 
+                <div style={{ position: 'relative', cursor: 'pointer' }}>
 
+                    <span
+                        onClick={() => setShowNotifications(!showNotifications)}
+                        style={{ fontSize: '28px' }}
+                    >
+                        🔔
+                    </span>
+
+                    {unreadCount > 0 && (
+                        <span style={{
+                            position: 'absolute',
+                            top: '-5px',
+                            right: '-8px',
+                            background: 'red',
+                            color: 'white',
+                            borderRadius: '50%',
+                            padding: '2px 6px',
+                            fontSize: '12px'
+                        }}>
+                            {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                    )}
+
+                </div>
+            </div>
+
+            {/* NOTIFICATIONS */}
+            {showNotifications && (
+                <div style={{
+                    background: 'white',
+                    padding: '15px',
+                    borderRadius: '10px',
+                    marginBottom: '25px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                    maxHeight: '300px',
+                    overflowY: 'auto'
+                }}>
+
+                    {/* HEADER + BUTTON */}
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                    }}>
+
+                        <h3>Notifications</h3>
+
+                        {unreadCount > 0 && (
+                            <button
+                                onClick={markAllAsRead}
+                                style={{
+                                    background: '#333',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '6px 10px',
+                                    borderRadius: '5px',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Mark All Read
+                            </button>
+                        )}
+
+                    </div>
+
+                    {notifications.length === 0 ? (
+                        <p>No notifications</p>
+                    ) : (
+                        notifications.map(notification => (
+                            <div
+                                key={notification._id}
+                                style={{
+                                    borderBottom: '1px solid #eee',
+                                    padding: '10px 0',
+                                    background: notification.isRead ? 'white' : '#eef6ff'
+                                }}
+                            >
+                                <p>{notification.message}</p>
+                                <small>
+                                    {new Date(notification.createdAt).toLocaleString()}
+                                </small>
+                            </div>
+                        ))
+                    )}
+
+                </div>
+            )}
 
             {/* USERS SECTION */}
             <section style={{ marginBottom: '50px' }}>
-
                 <h2 style={{
                     borderBottom: '2px solid #333',
                     paddingBottom: '10px'
                 }}>
                     Users Management
                 </h2>
-
-
-
 
                 <div style={{
                     display: 'grid',
@@ -171,7 +253,6 @@ function AdminDashboard() {
                 }}>
 
                     {users.map(user => (
-
                         <div key={user._id} style={{
                             background: '#fff',
                             padding: '15px',
@@ -180,7 +261,6 @@ function AdminDashboard() {
                         }}>
 
                             <h3>{user.name}</h3>
-
                             <p>{user.email}</p>
 
                             <p style={{
@@ -190,32 +270,21 @@ function AdminDashboard() {
                                 Role: {user.role}
                             </p>
 
-
-
-
-                            {/* SELF CHECK */}
                             {user._id === currentUserId ? (
-
-                                <button
-                                    disabled
-                                    style={{
-                                        marginTop: '10px',
-                                        background: '#3498db',
-                                        color: 'white',
-                                        border: 'none',
-                                        padding: '7px 10px',
-                                        borderRadius: '5px',
-                                        cursor: 'not-allowed',
-                                        opacity: 0.8
-                                    }}
-                                >
+                                <button disabled style={{
+                                    marginTop: '10px',
+                                    background: '#3498db',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '7px 10px',
+                                    borderRadius: '5px',
+                                    cursor: 'not-allowed',
+                                    opacity: 0.8
+                                }}>
                                     My Profile (Admin)
                                 </button>
-
                             ) : (
-
                                 <>
-                                    {/* ROLE CHANGE */}
                                     <button
                                         onClick={() => changeRole(user._id, user.role)}
                                         style={{
@@ -234,12 +303,7 @@ function AdminDashboard() {
                                             : 'Make Admin'}
                                     </button>
 
-
-
-
-                                    {/* DELETE USER */}
                                     {user.role !== 'admin' && (
-
                                         <button
                                             onClick={() => deleteUser(user._id)}
                                             style={{
@@ -254,37 +318,24 @@ function AdminDashboard() {
                                         >
                                             Delete User
                                         </button>
-
                                     )}
                                 </>
-
                             )}
 
                         </div>
-
                     ))}
 
                 </div>
-
             </section>
-
-
-
-
-
 
             {/* TODOS SECTION */}
             <section>
-
                 <h2 style={{
                     borderBottom: '2px solid #333',
                     paddingBottom: '10px'
                 }}>
                     Todos Management
                 </h2>
-
-
-
 
                 <div style={{
                     display: 'grid',
@@ -294,7 +345,6 @@ function AdminDashboard() {
                 }}>
 
                     {todos.map(todo => (
-
                         <div key={todo._id} style={{
                             background: '#fff',
                             padding: '15px',
@@ -303,15 +353,10 @@ function AdminDashboard() {
                         }}>
 
                             <h3>{todo.title}</h3>
-
                             <p>Status: <b>{todo.status}</b></p>
-
                             <p style={{ color: '#666' }}>
                                 User: {todo.user?.name || 'Unknown'}
                             </p>
-
-
-
 
                             <button
                                 onClick={() => deleteTodo(todo._id)}
@@ -329,11 +374,9 @@ function AdminDashboard() {
                             </button>
 
                         </div>
-
                     ))}
 
                 </div>
-
             </section>
 
         </div>

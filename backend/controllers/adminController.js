@@ -1,7 +1,7 @@
 const asyncHandler=require('express-async-handler')
 const User=require('../models/User')
 const Todo=require('../models/todo')
-
+const Notification = require('../models/Notification');
 //get all todos
 const getAllTodos = asyncHandler(async (req, res) => {
 
@@ -99,11 +99,38 @@ const updateUserRole = asyncHandler(async (req, res) => {
         user
     });
 });
+// GET ALL NOTIFICATIONS
+const getNotifications = asyncHandler(async (req, res) => {
 
+    const notifications = await Notification
+        .find()
+        .sort({ createdAt: -1 });
+
+    res.status(200).json({
+        notifications
+    });
+});
+
+
+
+// MARK ALL AS READ
+const markNotificationsRead = asyncHandler(async (req, res) => {
+
+    await Notification.updateMany(
+        {},
+        { isRead: true }
+    );
+
+    res.status(200).json({
+        message: 'Notifications marked as read'
+    });
+});
 module.exports = {
     getAllTodos,
     getAllUsers,
     deleteUser,
     deleteAnyTodo,
-    updateUserRole
+    updateUserRole,
+    getNotifications,
+    markNotificationsRead
 };

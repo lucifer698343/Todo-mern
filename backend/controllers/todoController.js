@@ -1,35 +1,44 @@
 const Todo = require('../models/todo');
-const { validationResult } = require('express-validator');
-const asyncHandler=require('express-async-handler')
+const Notification = require('../models/Notification');
+const User = require('../models/User');
 
-//creating todo
-const createTodo =asyncHandler (async (req, res) => {
+const { validationResult } = require('express-validator');
+const asyncHandler = require('express-async-handler');
+
+// CREATE TODO
+const createTodo = asyncHandler(async (req, res) => {
+
     const errors = validationResult(req);
 
-if(!errors.isEmpty()){
+    if (!errors.isEmpty()) {
 
-    return res.status(400)
-    throw new Error(errors.array()[0].msg);
-}
-   
+        res.status(400);
+        throw new Error(errors.array()[0].msg);
+    }
 
-        const { title, description } = req.body;
+    const { title, description } = req.body;
 
-        const newTodo = new Todo({
-            title,
-            description,
-            user: req.user.id
-        });
+    const newTodo = new Todo({
+        title,
+        description,
+        user: req.user.id
+    });
 
-        const savedTodo = await newTodo.save();
+    const savedTodo = await newTodo.save();
 
-        res.status(201).json({
-            message: 'Todo created successfully',
-            todo: savedTodo
-        });
+    const user = await User.findById(req.user.id);
 
-    
-})
+    await Notification.create({
+        message: `${user.name} added a new todo`,
+        isRead: false
+    });
+
+    res.status(201).json({
+        message: 'Todo created successfully',
+        todo: savedTodo
+    });
+});
+
 
 // GET TODOS
 const getTodos = asyncHandler(async (req, res) => {
@@ -67,6 +76,13 @@ const updateTodo = asyncHandler(async (req, res) => {
         throw new Error('Todo not found');
     }
 
+    const user = await User.findById(req.user.id);
+
+    await Notification.create({
+        message: `${user.name} updated a todo`,
+        isRead: false
+    });
+
     res.status(200).json({
         message: 'Todo updated successfully',
         todo: updatedTodo
@@ -88,15 +104,21 @@ const deleteTodo = asyncHandler(async (req, res) => {
         throw new Error('Todo not found');
     }
 
+    const user = await User.findById(req.user.id);
+
+    await Notification.create({
+        message: `${user.name} deleted their todo`,
+        isRead: false
+    });
+
     res.status(200).json({
         message: 'Todo deleted successfully'
     });
 });
-
 
 module.exports = {
     createTodo,
     getTodos,
     updateTodo,
     deleteTodo
-};
+};  

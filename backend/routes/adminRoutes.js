@@ -11,7 +11,9 @@ const {
     getAllUsers,
     deleteUser,
     deleteAnyTodo,
-    updateUserRole
+    updateUserRole,
+    getNotifications,
+    markNotificationsRead
 } = require('../controllers/adminController');
 
 
@@ -55,5 +57,15 @@ router.delete(
 router.put('/user/role/:id', 
     updateUserRole);
 
+//get notification of user activity
+router.get(
+    '/notifications',
+    getNotifications
+);
 
+//mark all as read
+router.put(
+    '/notifications/read',
+    markNotificationsRead
+);
 module.exports = router;
