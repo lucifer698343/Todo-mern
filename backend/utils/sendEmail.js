@@ -1,56 +1,72 @@
-const SibApiV3Sdk = require('sib-api-v3-sdk');
+const brevo = require('@getbrevo/brevo');
 
-const client = SibApiV3Sdk.ApiClient.instance;
+const apiInstance =
+    new brevo.TransactionalEmailsApi();
 
-// AUTH
-client.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
+apiInstance.setApiKey(
+    brevo.TransactionalEmailsApiApiKeys.apiKey,
+    process.env.BREVO_API_KEY
+);
 
-const tranEmailApi = new SibApiV3Sdk.TransactionalEmailsApi();
-
-
-
-const sendEmail = async (email, otp) => {
+const sendEmail = async (
+    email,
+    otp
+) => {
 
     try {
 
-        const sendSmtpEmail = {
-            to: [
-                {
-                    email: email
-                }
-            ],
+        const sendSmtpEmail =
+            new brevo.SendSmtpEmail();
 
-            sender: {
-                name: "Todo App",
-                email: "aayushintern17@gmail.com"
-            },
-
-            subject: "Verify Your Account",
-
-            htmlContent: `
-                <div style="font-family: Arial; padding: 20px;">
-                    <h2>Email Verification</h2>
-                    <p>Your OTP is:</p>
-                    <h1 style="color:#2563eb">${otp}</h1>
-                    <p>This OTP expires in 5 minutes.</p>
-                </div>
-            `
+        sendSmtpEmail.sender = {
+            name: 'Todo App',
+            email: 'aayushintern17@gmail.com'
         };
 
+        sendSmtpEmail.to = [
+            {
+                email
+            }
+        ];
 
+        sendSmtpEmail.subject =
+            'Verify Your Account';
 
-        await tranEmailApi.sendTransacEmail(sendSmtpEmail);
+        sendSmtpEmail.htmlContent = `
+            <div style="font-family: Arial; padding: 20px;">
+                <h2>Email Verification</h2>
 
-        console.log("Email sent successfully");
+                <p>Your OTP is:</p>
+
+                <h1 style="color:#2563eb">
+                    ${otp}
+                </h1>
+
+                <p>
+                    This OTP expires in 5 minutes.
+                </p>
+            </div>
+        `;
+
+        await apiInstance.sendTransacEmail(
+            sendSmtpEmail
+        );
+
+        console.log(
+            'Email sent successfully'
+        );
 
     } catch (error) {
 
-        console.log("Email sending failed:", error);
+        console.error(
+            'Email sending failed:',
+            error
+        );
 
-        throw new Error("Email failed to send");
+        throw new Error(
+            'Email failed to send'
+        );
     }
 };
-
-
 
 module.exports = sendEmail;
