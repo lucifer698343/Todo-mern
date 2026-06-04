@@ -1,22 +1,15 @@
 const brevo = require('@getbrevo/brevo');
 
-const apiInstance =
-    new brevo.TransactionalEmailsApi();
 
-apiInstance.setApiKey(
-    brevo.TransactionalEmailsApiApiKeys.apiKey,
-    process.env.BREVO_API_KEY
-);
+const client = brevo.ApiClient.instance;
+client.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
 
-const sendEmail = async (
-    email,
-    otp
-) => {
 
+const apiInstance = new brevo.TransactionalEmailsApi();
+
+const sendEmail = async (email, otp) => {
     try {
-
-        const sendSmtpEmail =
-            new brevo.SendSmtpEmail();
+        const sendSmtpEmail = new brevo.SendSmtpEmail();
 
         sendSmtpEmail.sender = {
             name: 'Todo App',
@@ -24,13 +17,10 @@ const sendEmail = async (
         };
 
         sendSmtpEmail.to = [
-            {
-                email
-            }
+            { email }
         ];
 
-        sendSmtpEmail.subject =
-            'Verify Your Account';
+        sendSmtpEmail.subject = 'Verify Your Account';
 
         sendSmtpEmail.htmlContent = `
             <div style="font-family: Arial; padding: 20px;">
@@ -38,34 +28,19 @@ const sendEmail = async (
 
                 <p>Your OTP is:</p>
 
-                <h1 style="color:#2563eb">
-                    ${otp}
-                </h1>
+                <h1 style="color:#2563eb">${otp}</h1>
 
-                <p>
-                    This OTP expires in 5 minutes.
-                </p>
+                <p>This OTP expires in 5 minutes.</p>
             </div>
         `;
 
-        await apiInstance.sendTransacEmail(
-            sendSmtpEmail
-        );
+        await apiInstance.sendTransacEmail(sendSmtpEmail);
 
-        console.log(
-            'Email sent successfully'
-        );
+        console.log('Email sent successfully');
 
     } catch (error) {
-
-        console.error(
-            'Email sending failed:',
-            error
-        );
-
-        throw new Error(
-            'Email failed to send'
-        );
+        console.error('Email sending failed:', error);
+        throw new Error('Email failed to send');
     }
 };
 
