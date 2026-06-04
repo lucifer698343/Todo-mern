@@ -1,11 +1,10 @@
 const brevo = require('@getbrevo/brevo');
 
-
-const client = brevo.ApiClient.instance;
-client.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
-
-
+// Create API instance directly
 const apiInstance = new brevo.TransactionalEmailsApi();
+
+// Set API key directly on instance
+apiInstance.apiKey = process.env.BREVO_API_KEY;
 
 const sendEmail = async (email, otp) => {
     try {
@@ -25,22 +24,19 @@ const sendEmail = async (email, otp) => {
         sendSmtpEmail.htmlContent = `
             <div style="font-family: Arial; padding: 20px;">
                 <h2>Email Verification</h2>
-
                 <p>Your OTP is:</p>
-
                 <h1 style="color:#2563eb">${otp}</h1>
-
                 <p>This OTP expires in 5 minutes.</p>
             </div>
         `;
 
         await apiInstance.sendTransacEmail(sendSmtpEmail);
 
-        console.log('Email sent successfully');
+        console.log("Email sent successfully");
 
     } catch (error) {
-        console.error('Email sending failed:', error);
-        throw new Error('Email failed to send');
+        console.error("Email sending failed:", error);
+        throw new Error("Email failed to send");
     }
 };
 
