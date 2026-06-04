@@ -1,43 +1,56 @@
-const brevo = require('@getbrevo/brevo');
+const SibApiV3Sdk = require('sib-api-v3-sdk');
 
-// Create API instance directly
-const apiInstance = new brevo.TransactionalEmailsApi();
+const client = SibApiV3Sdk.ApiClient.instance;
 
-// Set API key directly on instance
-apiInstance.apiKey = process.env.BREVO_API_KEY;
+// AUTH
+client.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
+
+const tranEmailApi = new SibApiV3Sdk.TransactionalEmailsApi();
+
+
 
 const sendEmail = async (email, otp) => {
-    try {
-        const sendSmtpEmail = new brevo.SendSmtpEmail();
 
-        sendSmtpEmail.sender = {
-            name: 'Todo App',
-            email: 'aayushintern17@gmail.com'
+    try {
+
+        const sendSmtpEmail = {
+            to: [
+                {
+                    email: email
+                }
+            ],
+
+            sender: {
+                name: "Todo App",
+                email: "aayushintern17@gmail.com"
+            },
+
+            subject: "Verify Your Account",
+
+            htmlContent: `
+                <div style="font-family: Arial; padding: 20px;">
+                    <h2>Email Verification</h2>
+                    <p>Your OTP is:</p>
+                    <h1 style="color:#2563eb">${otp}</h1>
+                    <p>This OTP expires in 5 minutes.</p>
+                </div>
+            `
         };
 
-        sendSmtpEmail.to = [
-            { email }
-        ];
 
-        sendSmtpEmail.subject = 'Verify Your Account';
 
-        sendSmtpEmail.htmlContent = `
-            <div style="font-family: Arial; padding: 20px;">
-                <h2>Email Verification</h2>
-                <p>Your OTP is:</p>
-                <h1 style="color:#2563eb">${otp}</h1>
-                <p>This OTP expires in 5 minutes.</p>
-            </div>
-        `;
-
-        await apiInstance.sendTransacEmail(sendSmtpEmail);
+        await tranEmailApi.sendTransacEmail(sendSmtpEmail);
 
         console.log("Email sent successfully");
 
     } catch (error) {
-        console.error("Email sending failed:", error);
+
+        console.log("Email sending failed:", error);
+
         throw new Error("Email failed to send");
     }
 };
+
+
 
 module.exports = sendEmail;
